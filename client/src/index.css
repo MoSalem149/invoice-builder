@@ -1,0 +1,109 @@
+/* Import statements must come first */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* RTL Support */
+.rtl {
+  direction: rtl;
+}
+
+.ltr {
+  direction: ltr;
+}
+
+/* Print styles */
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  .print\:max-w-none {
+    max-width: none !important;
+  }
+
+  .print\:mx-0 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .print\:hover\:bg-transparent:hover {
+    background-color: transparent !important;
+  }
+
+  .print\:cursor-default {
+    cursor: default !important;
+  }
+
+  .watermark {
+    opacity: 0.1 !important;
+    z-index: 9999 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Arabic font support */
+.rtl {
+  font-family: "Noto Sans Arabic", Arial, sans-serif;
+}
+
+/* Mobile responsive improvements */
+@media (max-width: 640px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+
+  .table-responsive th,
+  .table-responsive td {
+    padding: 0.5rem;
+  }
+}
+
+/* Responsive grid improvements */
+@media (max-width: 1024px) {
+  .invoice-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+  button {
+    min-height: 44px;
+  }
+
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+  }
+}
+
+/* Improved spacing for mobile */
+@media (max-width: 640px) {
+  .mobile-spacing {
+    padding: 1rem;
+  }
+
+  .mobile-spacing-sm {
+    padding: 0.5rem;
+  }
+}
