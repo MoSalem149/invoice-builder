@@ -66,7 +66,11 @@
     "verifyEmail": "Verify Email",
     "emailVerified": "Email verified",
     "canResetPassword": "You can now reset your password",
-    "passwordUpdated": "Password updated successfully"
+    "passwordUpdated": "Password updated successfully",
+    "resetting": "Resetting...",
+    "verifying": "Verifying...",
+    "canNowLogin": "You can now login",
+    "resetFailed": "Reset failed"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -83,7 +87,8 @@
     "viewInvoiceHistoryDesc": "Browse and manage your past invoices",
     "recentInvoices": "Recent Invoices",
     "latestActivity": "Latest Activity",
-    "noInvoicesYet": "No invoices created yet"
+    "noInvoicesYet": "No invoices created yet",
+    "welcomeMessage": "Welcome to Invoice Builder - Professional invoice management system"
   },
   "invoice": {
     "invoice": "INVOICE",
@@ -107,7 +112,9 @@
     "selectDate": "Select date",
     "clickToAddProducts": "Click \"Add Products\" to add items",
     "clickToAddNotes": "Click to add notes",
-    "clickToAddTerms": "Click to add terms and conditions"
+    "clickToAddTerms": "Click to add terms and conditions",
+    "editInvoice": "Edit Invoice {number}",
+    "updateInvoice": "Update Invoice"
   },
   "create": {
     "title": "Create Invoice",

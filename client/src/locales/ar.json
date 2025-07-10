@@ -66,7 +66,11 @@
     "verifyEmail": "تحقق من البريد الإلكتروني",
     "emailVerified": "تم التحقق من البريد الإلكتروني",
     "canResetPassword": "يمكنك الآن إعادة تعيين كلمة المرور الخاصة بك",
-    "passwordUpdated": "تم تحديث كلمة المرور بنجاح"
+    "passwordUpdated": "تم تحديث كلمة المرور بنجاح",
+    "resetting": "جاري إعادة التعيين...",
+    "verifying": "جاري التحقق...",
+    "canNowLogin": "يمكنك الآن تسجيل الدخول",
+    "resetFailed": "فشل إعادة التعيين"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -83,7 +87,8 @@
     "viewInvoiceHistoryDesc": "تصفح وإدارة فواتيرك السابقة",
     "recentInvoices": "الفواتير الأخيرة",
     "latestActivity": "آخر النشاطات",
-    "noInvoicesYet": "لم يتم إنشاء فواتير بعد"
+    "noInvoicesYet": "لم يتم إنشاء فواتير بعد",
+    "welcomeMessage": "مرحبًا بكم في منشئ الفواتير - نظام إدارة الفواتير الاحترافي"
   },
   "invoice": {
     "invoice": "فاتورة",
@@ -107,7 +112,9 @@
     "selectDate": "اختر التاريخ",
     "clickToAddProducts": "انقر على \"إضافة منتجات\" لإضافة عناصر",
     "clickToAddNotes": "انقر لإضافة ملاحظات",
-    "clickToAddTerms": "انقر لإضافة الشروط والأحكام"
+    "clickToAddTerms": "انقر لإضافة الشروط والأحكام",
+    "editInvoice": "تعديل الفاتورة {number}",
+    "updateInvoice": "تحديث الفاتورة"
   },
   "create": {
     "title": "إنشاء فاتورة",

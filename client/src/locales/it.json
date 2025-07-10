@@ -66,7 +66,11 @@
     "verifyEmail": "Verifica Email",
     "emailVerified": "Email verificata",
     "canResetPassword": "Ora puoi reimpostare la password",
-    "passwordUpdated": "Password aggiornata con successo"
+    "passwordUpdated": "Password aggiornata con successo",
+    "resetting": "Reimpostazione in corso...",
+    "verifying": "Verifica in corso...",
+    "canNowLogin": "Ora puoi accedere",
+    "resetFailed": "Reimpostazione fallita"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -83,7 +87,8 @@
     "viewInvoiceHistoryDesc": "Sfoglia e gestisci le tue fatture precedenti",
     "recentInvoices": "Fatture Recenti",
     "latestActivity": "Ultime Attività",
-    "noInvoicesYet": "Nessuna fattura creata ancora"
+    "noInvoicesYet": "Nessuna fattura creata ancora",
+    "welcomeMessage": "Benvenuto in Invoice Builder - Sistema professionale di gestione fatture"
   },
   "invoice": {
     "invoice": "FATTURA",
@@ -107,7 +112,9 @@
     "selectDate": "Seleziona data",
     "clickToAddProducts": "Clicca \"Aggiungi Prodotti\" per aggiungere articoli",
     "clickToAddNotes": "Clicca per aggiungere note",
-    "clickToAddTerms": "Clicca per aggiungere termini e condizioni"
+    "clickToAddTerms": "Clicca per aggiungere termini e condizioni",
+    "editInvoice": "Modifica Fattura {number}",
+    "updateInvoice": "Aggiorna Fattura"
   },
   "create": {
     "title": "Crea Fattura",

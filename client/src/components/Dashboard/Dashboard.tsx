@@ -157,7 +157,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         <p className={`text-gray-600 ${isRTL ? "text-right" : "text-left"}`}>
           {authState.isAuthenticated
             ? t("dashboard.subtitle")
-            : "Welcome to Invoice Builder - Professional invoice management system"}
+            : t("dashboard.welcomeMessage")}
         </p>
       </div>
 
