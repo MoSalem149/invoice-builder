@@ -59,12 +59,17 @@ const Navbar: React.FC<NavbarProps> = ({
           <div
             className={`flex items-center ${isRTL ? "flex-row-reverse" : ""}`}
           >
-            <FileText
-              className={`h-8 w-8 text-gray-800 ${isRTL ? "ml-3" : "mr-3"}`}
-            />
-            <span className="text-xl font-semibold text-gray-800">
-              {t("navigation.invoiceBuilder")}
-            </span>
+            <button
+              onClick={() => onPageChange("dashboard")}
+              className="flex items-center focus:outline-none"
+            >
+              <FileText
+                className={`h-8 w-8 text-gray-800 ${isRTL ? "ml-3" : "mr-3"}`}
+              />
+              <span className="text-xl font-semibold text-gray-800">
+                {t("navigation.invoiceBuilder")}
+              </span>
+            </button>
           </div>
 
           {/* Desktop Navigation */}
