@@ -7,8 +7,8 @@ export interface CompanyInfo {
   address?: string;
   email?: string;
   phone?: string;
-  currency: "USD" | "EGP" | "CHF";
-  language: "en" | "ar" | "it";
+  currency: "CHF" | "USD" | "EGP";
+  language: "it" | "en" | "ar";
   watermark?: string;
   showNotes?: boolean;
   showTerms?: boolean;
@@ -18,74 +18,74 @@ export interface CompanyInfo {
 // Translation mappings
 const translations = {
   invoice: {
+    it: "FATTURA",
     en: "INVOICE",
     ar: "فاتورة",
-    it: "FATTURA",
   },
   billTo: {
+    it: "Fattura a:",
     en: "Bill To:",
     ar: "فاتورة إلى:",
-    it: "Fattura a:",
   },
   invoiceNumber: {
+    it: "Numero fattura",
     en: "Invoice #",
     ar: "رقم الفاتورة",
-    it: "Numero fattura",
   },
   invoiceDate: {
+    it: "Data fattura",
     en: "Invoice Date",
     ar: "تاريخ الفاتورة",
-    it: "Data fattura",
   },
   dueDate: {
+    it: "Scadenza",
     en: "Due Date",
     ar: "تاريخ الاستحقاق",
-    it: "Scadenza",
   },
   product: {
+    it: "Prodotto",
     en: "Product",
     ar: "المنتج",
-    it: "Prodotto",
   },
   price: {
+    it: "Prezzo",
     en: "Price",
     ar: "السعر",
-    it: "Prezzo",
   },
   discount: {
+    it: "Sconto %",
     en: "Discount %",
     ar: "الخصم %",
-    it: "Sconto %",
   },
   amount: {
+    it: "Importo",
     en: "Amount",
     ar: "المبلغ",
-    it: "Importo",
   },
   subtotal: {
+    it: "Subtotale:",
     en: "Subtotal:",
     ar: "المجموع الفرعي:",
-    it: "Subtotale:",
   },
   totalTax: {
+    it: "Tassa:",
     en: "Tax:",
     ar: "الضريبة:",
-    it: "Tassa:",
   },
   total: {
+    it: "Totale:",
     en: "Total:",
     ar: "الإجمالي:",
-    it: "Totale:",
   },
   notes: {
+    it: "Note:",
     en: "Notes:",
     ar: "ملاحظات:",
-    it: "Note:",
   },
   terms: {
+    it: "Termini e condizioni:",
     en: "Terms & Conditions:",
     ar: "الشروط والأحكام:",
-    it: "Termini e condizioni:",
   },
 };
 
@@ -97,19 +97,19 @@ export const generateInvoicePDF = (
   // Determine currency symbol based on currency and language
   let currencySymbol = "$";
   switch (companyInfo.currency) {
+    case "CHF":
+      currencySymbol = "CHF";
+      break;
     case "USD":
       currencySymbol = "$";
       break;
     case "EGP":
       currencySymbol = isRTL ? "ج.م" : "EGP";
       break;
-    case "CHF":
-      currencySymbol = "CHF";
-      break;
   }
 
   // Get language from company info
-  const lang = companyInfo.language || "en";
+  const lang = companyInfo.language || "it";
   const dir = isRTL ? "rtl" : "ltr";
 
   // Get appropriate translations

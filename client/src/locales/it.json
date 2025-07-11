@@ -1,6 +1,7 @@
 {
   "common": {
     "save": "Salva",
+    "update": "Aggiorna",
     "cancel": "Annulla",
     "delete": "Elimina",
     "edit": "Modifica",
@@ -66,6 +67,7 @@
     "verifyEmail": "Verifica Email",
     "emailVerified": "Email verificata",
     "canResetPassword": "Ora puoi reimpostare la password",
+    "passwordReset": "Password reimpostata con successo",
     "passwordUpdated": "Password aggiornata con successo",
     "resetting": "Reimpostazione in corso...",
     "verifying": "Verifica in corso...",
@@ -270,6 +272,6 @@
   "currencies": {
     "usd": "USD ($)",
     "egp": "EGP (ج.م)",
-    "chf": "CHF (Fr.)"
+    "chf": "CHF (CHF)"
   }
 }

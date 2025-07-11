@@ -15,18 +15,12 @@ const clientSchema = new mongoose.Schema(
     address: {
       type: String,
       trim: true,
-      default: ""
+      default: "",
     },
     phone: {
       type: String,
       trim: true,
-      default: ""
-    },
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      default: ""
+      default: "",
     },
     archived: {
       type: Boolean,

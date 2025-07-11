@@ -46,9 +46,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const currencySymbol =
     state.company.currency === "USD"
       ? "$"
-      : state.company.currency === "EGP"
-      ? "ج.م"
-      : "Fr.";
+      : state.company.currency === "CHF"
+      ? "CHF"
+      : "ج.م";
 
   // Load dashboard statistics
   useEffect(() => {

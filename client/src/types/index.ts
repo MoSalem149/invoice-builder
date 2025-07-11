@@ -1,5 +1,3 @@
-// src/types/index.ts
-
 // Notification Types
 export interface NotificationInput {
   type: "success" | "error" | "warning" | "info";
@@ -50,8 +48,8 @@ export interface Company {
   address?: string;
   email?: string;
   phone?: string;
-  currency: "USD" | "EGP" | "CHF";
-  language: "en" | "ar" | "it";
+  currency: "CHF" | "USD" | "EGP";
+  language: "it" | "en" | "ar";
   watermark?: string;
   showNotes?: boolean;
   showTerms?: boolean;
@@ -60,10 +58,10 @@ export interface Company {
 
 export interface Client {
   id: string;
+  _id?: string;
   name: string;
   address?: string;
   phone?: string;
-  email?: string;
   archived?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -71,6 +69,7 @@ export interface Client {
 
 export interface Product {
   id: string;
+  _id?: string;
   name: string;
   description: string;
   discount: number;
@@ -91,7 +90,7 @@ export interface InvoiceItem {
 
 export interface Invoice {
   id: string;
-  _id?: string; // For MongoDB
+  _id?: string;
   number: string;
   date: string;
   dueDate: string;
@@ -143,8 +142,8 @@ export interface AppContextType {
 export interface LanguageContextType {
   t: (key: string) => string;
   isRTL: boolean;
-  language: "en" | "ar" | "it";
-  setLanguage: (lang: "en" | "ar" | "it") => void;
+  language: "it" | "en" | "ar";
+  setLanguage: (lang: "it" | "en" | "ar") => void;
 }
 
 // Notification Context Type

@@ -1,10 +1,10 @@
 import React, { createContext, useContext, ReactNode, useEffect } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import it from "../locales/it.json";
 import en from "../locales/en.json";
 import ar from "../locales/ar.json";
-import it from "../locales/it.json";
 
-type Language = "en" | "ar" | "it";
+type Language = "it" | "en" | "ar";
 type Translations = typeof en;
 
 interface LanguageContextType {
@@ -15,9 +15,9 @@ interface LanguageContextType {
 }
 
 const translations: Record<Language, Translations> = {
+  it,
   en,
   ar,
-  it,
 };
 
 type NestedTranslation = {
@@ -29,14 +29,22 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [language, setLanguage] = useLocalStorage<Language>("language", "en");
+  // Track if this is the first load
+  const [isInitialLoad, setIsInitialLoad] = React.useState(true);
+  const [language, setLanguage] = useLocalStorage<Language>("language", "it");
 
   const isRTL = language === "ar";
 
   useEffect(() => {
+    // Only force Italian on the very first load
+    if (isInitialLoad) {
+      setLanguage("it");
+      setIsInitialLoad(false);
+    }
+
     document.documentElement.dir = isRTL ? "rtl" : "ltr";
     document.documentElement.lang = language;
-  }, [language, isRTL]);
+  }, [language, isRTL, isInitialLoad, setLanguage]);
 
   const getNestedTranslation = (
     obj: NestedTranslation,

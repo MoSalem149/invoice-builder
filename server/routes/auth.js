@@ -54,23 +54,23 @@ router.post(
       }
 
       // Create new user
-      const user = new User({ 
-        name, 
-        email, 
+      const user = new User({
+        name,
+        email,
         password,
         company: {
-          logo: "",
-          name: "",
-          address: "",
-          email: "",
+          logo: "/images/default-logo.png",
+          name: "Said Trasporto Gordola",
+          address: "Via S.Gottardo 100,\n6596 Gordola",
+          email: "Info@saidauto.ch",
           phone: "",
-          currency: "USD",
-          language: "en",
+          currency: "CHF",
+          language: "it",
           watermark: "",
           showNotes: false,
           showTerms: false,
-          taxRate: 0
-        }
+          taxRate: 0,
+        },
       });
       await user.save();
 

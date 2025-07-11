@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Search, Plus, X, User, Archive, ArchiveRestore } from "lucide-react";
+import {
+  Search,
+  Plus,
+  X,
+  User,
+  Archive,
+  ArchiveRestore,
+  Edit,
+} from "lucide-react";
 import { useApp } from "../../../hooks/useApp";
 import { useAuth } from "../../../hooks/useAuth";
 import { useLanguage } from "../../../hooks/useLanguage";
@@ -30,6 +38,8 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
   const [showAddForm, setShowAddForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [newClient, setNewClient] = useState<Omit<Client, "id">>({
     name: "",
     address: "",
@@ -92,8 +102,8 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
           },
           body: JSON.stringify({
             name: newClient.name,
-            address: newClient.address || "",
-            phone: newClient.phone || "",
+            address: newClient.address || undefined,
+            phone: newClient.phone || undefined,
           }),
         }
       );
@@ -130,41 +140,51 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setNewClient({ ...newClient, [field]: value });
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+  const handleUpdateClient = async () => {
+    if (!validateForm() || !editingClient?.id) {
+      return;
     }
-  };
 
-  const handleArchiveToggle = async (clientId: string, isArchived: boolean) => {
     if (!authState.isAuthenticated || !authState.token) {
-      showError("Authentication required", "Please login to modify clients");
+      showError("Authentication required", "Please login to update clients");
       return;
     }
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/clients/${clientId}/archive`,
+        `${import.meta.env.VITE_API_URL}/api/clients/${editingClient.id}`,
         {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${authState.token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ archived: !isArchived }),
+          body: JSON.stringify({
+            name: newClient.name,
+            address: newClient.address || undefined,
+            phone: newClient.phone || undefined,
+          }),
         }
       );
 
       if (response.ok) {
-        if (isArchived) {
-          dispatch({ type: "UNARCHIVE_CLIENT", payload: clientId });
-        } else {
-          dispatch({ type: "ARCHIVE_CLIENT", payload: clientId });
-        }
+        const data = await response.json();
+        const updatedClient: Client = {
+          id: data.data._id,
+          name: data.data.name,
+          address: data.data.address,
+          phone: data.data.phone,
+          archived: data.data.archived,
+        };
+
+        dispatch({ type: "UPDATE_CLIENT", payload: updatedClient });
+        setNewClient({ name: "", address: "", phone: "" });
+        setShowAddForm(false);
+        setEditingClient(null);
+        setErrors({});
         showSuccess(
-          isArchived ? "Client unarchived" : "Client archived",
-          isArchived ? "Client has been restored" : "Client has been archived"
+          "Client updated successfully",
+          "Client information has been updated"
         );
       } else {
         const errorData = await response.json();
@@ -176,6 +196,77 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
     } catch (error) {
       console.error("Error updating client:", error);
       showError("Network error", "Failed to connect to server");
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setNewClient({ ...newClient, [field]: value });
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleEditClick = (client: Client) => {
+    setEditingClient(client);
+    setNewClient({
+      name: client.name,
+      address: client.address || "",
+      phone: client.phone || "",
+    });
+    setShowAddForm(true);
+  };
+
+  const handleArchiveToggle = async (clientId: string, isArchived: boolean) => {
+    if (!clientId) {
+      showError("Invalid client", "No client ID provided");
+      return;
+    }
+
+    if (!authState.isAuthenticated || !authState.token) {
+      showError("Authentication required", "Please login to modify clients");
+      return;
+    }
+
+    setIsArchiving(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/clients/${clientId}/archive`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${authState.token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ archived: !isArchived }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update client");
+      }
+
+      const data = await response.json();
+      const updatedClient = data.data;
+
+      if (isArchived) {
+        dispatch({ type: "UNARCHIVE_CLIENT", payload: updatedClient._id });
+      } else {
+        dispatch({ type: "ARCHIVE_CLIENT", payload: updatedClient._id });
+      }
+
+      showSuccess(
+        isArchived ? "Client unarchived" : "Client archived",
+        isArchived ? "Client has been restored" : "Client has been archived"
+      );
+    } catch (error) {
+      console.error("Error updating client:", error);
+      showError(
+        "Failed to update client",
+        error instanceof Error ? error.message : "Please try again"
+      );
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -251,7 +342,10 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
         {/* Add Client Button */}
         {!showArchived && (
           <button
-            onClick={() => setShowAddForm(true)}
+            onClick={() => {
+              setEditingClient(null);
+              setShowAddForm(true);
+            }}
             className={`w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
               isRTL ? "space-x-reverse flex-row-reverse" : ""
             }`}
@@ -307,23 +401,43 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() =>
-                    handleArchiveToggle(client.id, client.archived || false)
-                  }
-                  className="p-1 hover:bg-gray-100 rounded transition-colors"
-                  title={
-                    client.archived
-                      ? t("common.unarchive")
-                      : t("common.archive")
-                  }
+                <div
+                  className={`flex space-x-2 ${isRTL ? "space-x-reverse" : ""}`}
                 >
-                  {client.archived ? (
-                    <ArchiveRestore className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Archive className="h-4 w-4 text-gray-500" />
+                  {!client.archived && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditClick(client);
+                      }}
+                      className="p-1 hover:bg-gray-100 rounded transition-colors text-blue-500"
+                      title={t("common.edit")}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
                   )}
-                </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleArchiveToggle(client.id, client.archived || false);
+                    }}
+                    disabled={isArchiving}
+                    className={`p-1 hover:bg-gray-100 rounded transition-colors ${
+                      isArchiving ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    title={
+                      client.archived
+                        ? t("common.unarchive")
+                        : t("common.archive")
+                    }
+                  >
+                    {client.archived ? (
+                      <ArchiveRestore className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Archive className="h-4 w-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -337,7 +451,7 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
         )}
       </div>
 
-      {/* Add Client Modal */}
+      {/* Add/Edit Client Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md">
@@ -346,7 +460,9 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
                 isRTL ? "text-right" : "text-left"
               }`}
             >
-              {t("client.addNewClient")}
+              {editingClient
+                ? t("client.editClient")
+                : t("client.addNewClient")}
             </h3>
 
             <div className="space-y-4">
@@ -356,7 +472,8 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
                     isRTL ? "text-right" : "text-left"
                   }`}
                 >
-                  {t("client.clientName")}
+                  {t("client.clientName")}{" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -446,6 +563,7 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
               <button
                 onClick={() => {
                   setShowAddForm(false);
+                  setEditingClient(null);
                   setErrors({});
                   setNewClient({ name: "", address: "", phone: "" });
                 }}
@@ -454,10 +572,10 @@ const ClientPanel: React.FC<ClientPanelProps> = ({
                 {t("common.cancel")}
               </button>
               <button
-                onClick={handleAddClient}
+                onClick={editingClient ? handleUpdateClient : handleAddClient}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                {t("client.addClient")}
+                {editingClient ? t("common.update") : t("client.addClient")}
               </button>
             </div>
           </div>

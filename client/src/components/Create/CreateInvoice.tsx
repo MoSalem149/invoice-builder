@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Save, Eye, Printer as Print } from "lucide-react";
 import { useApp } from "../../hooks/useApp";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -18,6 +18,7 @@ const CreateInvoice: React.FC = () => {
   const { showSuccess, showError } = useNotificationContext();
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   const [invoice, setInvoice] = useState<Partial<Invoice>>({
     number: `INV-${String(state.invoices.length + 1).padStart(4, "0")}`,
@@ -32,6 +33,22 @@ const CreateInvoice: React.FC = () => {
     notes: "",
     terms: "",
   });
+
+  // Check screen size and set isMobile state
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+
+    // Initial check
+    checkScreenSize();
+
+    // Add event listener
+    window.addEventListener("resize", checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
 
   const calculateTotals = (items: InvoiceItem[]) => {
     const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
@@ -75,11 +92,14 @@ const CreateInvoice: React.FC = () => {
       };
 
       const success = await saveInvoice(invoiceData);
-      
+
       if (success) {
         showSuccess(
           t("create.invoiceSavedSuccess"),
-          t("create.invoiceSavedMessage").replace("{number}", invoiceData.number),
+          t("create.invoiceSavedMessage").replace(
+            "{number}",
+            invoiceData.number
+          ),
           4000
         );
         // Reset form
@@ -149,6 +169,15 @@ const CreateInvoice: React.FC = () => {
   };
 
   const renderPanel = () => {
+    if (!activePanel) return null;
+
+    const panelProps = {
+      onClose: () => {
+        setActivePanel(null);
+        if (isMobile) setShowPreview(true);
+      },
+    };
+
     switch (activePanel) {
       case "client":
         return (
@@ -157,8 +186,9 @@ const CreateInvoice: React.FC = () => {
             onSelectClient={(client) => {
               updateInvoice({ client });
               setActivePanel(null);
+              if (isMobile) setShowPreview(true);
             }}
-            onClose={() => setActivePanel(null)}
+            {...panelProps}
           />
         );
       case "details":
@@ -168,8 +198,9 @@ const CreateInvoice: React.FC = () => {
             onUpdate={(updates) => {
               updateInvoice(updates);
               setActivePanel(null);
+              if (isMobile) setShowPreview(true);
             }}
-            onClose={() => setActivePanel(null)}
+            {...panelProps}
           />
         );
       case "products":
@@ -179,8 +210,9 @@ const CreateInvoice: React.FC = () => {
             onUpdate={(items) => {
               updateInvoice({ items });
               setActivePanel(null);
+              if (isMobile) setShowPreview(true);
             }}
-            onClose={() => setActivePanel(null)}
+            {...panelProps}
           />
         );
       case "notes":
@@ -190,8 +222,9 @@ const CreateInvoice: React.FC = () => {
             onUpdate={(notes) => {
               updateInvoice({ notes });
               setActivePanel(null);
+              if (isMobile) setShowPreview(true);
             }}
-            onClose={() => setActivePanel(null)}
+            {...panelProps}
           />
         );
       case "terms":
@@ -201,8 +234,9 @@ const CreateInvoice: React.FC = () => {
             onUpdate={(terms) => {
               updateInvoice({ terms });
               setActivePanel(null);
+              if (isMobile) setShowPreview(true);
             }}
-            onClose={() => setActivePanel(null)}
+            {...panelProps}
           />
         );
       default:
@@ -210,12 +244,19 @@ const CreateInvoice: React.FC = () => {
     }
   };
 
+  const panelClickHandler = (panel: string) => {
+    setActivePanel(panel);
+    if (isMobile) {
+      setShowPreview(false);
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-gray-100">
-      {/* Left Panel */}
+      {/* Left Panel - Always render but control visibility */}
       <div
         className={`${
-          activePanel ? "lg:w-1/3" : "w-0"
+          activePanel ? "block lg:w-1/3" : "hidden lg:block lg:w-0"
         } transition-all duration-300 overflow-hidden`}
       >
         {renderPanel()}
@@ -224,11 +265,13 @@ const CreateInvoice: React.FC = () => {
       {/* Right Panel - Invoice Preview */}
       <div
         className={`${
-          activePanel ? "lg:w-2/3" : "w-full"
-        } transition-all duration-300 flex flex-col`}
+          activePanel && !isMobile ? "lg:w-2/3" : "w-full"
+        } transition-all duration-300 flex flex-col ${
+          isMobile && !showPreview ? "hidden" : "block"
+        }`}
       >
-        {/* Toolbar */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between print:hidden space-y-3 sm:space-y-0">
+        {/* Toolbar - fixed below navbar */}
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between print:hidden space-y-3 sm:space-y-0 sticky top-16 z-40">
           <div
             className={`flex items-center space-x-4 ${
               isRTL ? "space-x-reverse flex-row-reverse" : ""
@@ -285,11 +328,11 @@ const CreateInvoice: React.FC = () => {
               <div id="invoice-preview" className="relative">
                 <InvoicePreview
                   invoice={invoice}
-                  onClientClick={() => setActivePanel("client")}
-                  onDetailsClick={() => setActivePanel("details")}
-                  onProductsClick={() => setActivePanel("products")}
-                  onNotesClick={() => setActivePanel("notes")}
-                  onTermsClick={() => setActivePanel("terms")}
+                  onClientClick={() => panelClickHandler("client")}
+                  onDetailsClick={() => panelClickHandler("details")}
+                  onProductsClick={() => panelClickHandler("products")}
+                  onNotesClick={() => panelClickHandler("notes")}
+                  onTermsClick={() => panelClickHandler("terms")}
                 />
               </div>
             </div>

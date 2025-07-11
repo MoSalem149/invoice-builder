@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Save, Upload, Building, Edit } from "lucide-react";
 import { useApp } from "../../hooks/useApp";
 import { useAuth } from "../../hooks/useAuth";
@@ -12,6 +12,7 @@ import {
   validateWatermark,
   validateTaxRate,
 } from "../../utils/validation";
+// const DEFAULT_LOGO = "/images/default-logo.png";
 
 const Settings: React.FC = () => {
   const { state, dispatch } = useApp();
@@ -22,7 +23,8 @@ const Settings: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     ...state.company,
-    language: language,
+    language: state.company.language || "it",
+    currency: state.company.currency || "CHF",
     logo: state.company.logo || "",
     email: state.company.email || "",
     phone: state.company.phone || "",
@@ -32,6 +34,22 @@ const Settings: React.FC = () => {
     showTerms: state.company.showTerms || false,
     taxRate: state.company.taxRate || 0,
   });
+
+  const [pendingNotification, setPendingNotification] = useState<{
+    type: "success" | "error";
+    titleKey: string;
+    messageKey: string;
+    duration?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (pendingNotification) {
+      const { type, titleKey, messageKey, duration } = pendingNotification;
+      const showFunc = type === "success" ? showSuccess : showError;
+      showFunc(t(titleKey), t(messageKey), duration);
+      setPendingNotification(null);
+    }
+  }, [pendingNotification, t]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -71,32 +89,32 @@ const Settings: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    // Name validation
+    // Name validation (only required field)
     const nameError = validateCompanyName(formData.name, t);
     if (nameError) newErrors.name = nameError;
 
-    // Email validation
-    const emailError = validateEmail(formData.email, t);
-    if (emailError) newErrors.email = emailError;
-
-    // Phone validation
-    const phoneError = validatePhoneNumber(formData.phone, t);
-    if (phoneError) newErrors.phone = phoneError;
-
-    // Address validation
-    const addressError = validateCompanyAddress(formData.address, t);
-    if (addressError) newErrors.address = addressError;
-
-    // Logo validation
-    if (!formData.logo) {
-      newErrors.logo = t("validation.logoRequired");
+    // Optional field validations (only validate if there's content)
+    if (formData.email) {
+      const emailError = validateEmail(formData.email, t);
+      if (emailError) newErrors.email = emailError;
     }
 
-    // Watermark validation
-    const watermarkError = validateWatermark(formData.watermark, t);
-    if (watermarkError) newErrors.watermark = watermarkError;
+    if (formData.phone) {
+      const phoneError = validatePhoneNumber(formData.phone, t);
+      if (phoneError) newErrors.phone = phoneError;
+    }
 
-    // Tax Rate validation
+    if (formData.address) {
+      const addressError = validateCompanyAddress(formData.address, t);
+      if (addressError) newErrors.address = addressError;
+    }
+
+    if (formData.watermark) {
+      const watermarkError = validateWatermark(formData.watermark, t);
+      if (watermarkError) newErrors.watermark = watermarkError;
+    }
+
+    // Tax Rate validation (always validate if it exists)
     const taxRateError = validateTaxRate(formData.taxRate || 0, t);
     if (taxRateError) newErrors.taxRate = taxRateError;
 
@@ -106,15 +124,20 @@ const Settings: React.FC = () => {
 
   const handleSave = async () => {
     if (!validateForm()) {
-      showError(
-        t("validation.validationError"),
-        t("validation.fixErrorsBelow")
-      );
+      setPendingNotification({
+        type: "error",
+        titleKey: "validation.validationError",
+        messageKey: "validation.fixErrorsBelow",
+      });
       return;
     }
 
     if (!authState.isAuthenticated || !authState.token) {
-      showError("Authentication required", "Please login to save settings");
+      setPendingNotification({
+        type: "error",
+        titleKey: "settings.authRequired",
+        messageKey: "settings.loginToSave",
+      });
       return;
     }
 
@@ -147,22 +170,32 @@ const Settings: React.FC = () => {
         const data = await response.json();
         dispatch({ type: "UPDATE_COMPANY", payload: data.data });
         setIsEditing(false);
+
+        // Update the language context first
         setLanguage(formData.language);
-        showSuccess(
-          t("settings.settingsSavedSuccess"),
-          t("settings.settingsSavedMessage"),
-          4000
-        );
+
+        // Queue the success notification
+        setPendingNotification({
+          type: "success",
+          titleKey: "settings.settingsSavedSuccess",
+          messageKey: "settings.settingsSavedMessage",
+          duration: 4000,
+        });
       } else {
         const errorData = await response.json();
-        showError(
-          "Failed to save settings",
-          errorData.message || "Please try again"
-        );
+        setPendingNotification({
+          type: "error",
+          titleKey: "settings.saveFailed",
+          messageKey: errorData.message || "settings.tryAgain",
+        });
       }
     } catch (error) {
       console.error("Error saving settings:", error);
-      showError("Network error", "Failed to connect to server");
+      setPendingNotification({
+        type: "error",
+        titleKey: "settings.networkError",
+        messageKey: "settings.connectionFailed",
+      });
     }
   };
 
@@ -174,6 +207,7 @@ const Settings: React.FC = () => {
     setFormData({
       ...state.company,
       language: language,
+      logo: state.company.logo || "",
       email: state.company.email || "",
       phone: state.company.phone || "",
       address: state.company.address || "",
@@ -219,7 +253,7 @@ const Settings: React.FC = () => {
             {!isEditing && (
               <button
                 onClick={handleEdit}
-                className={`flex items-center space-x-2 px-3 py-1 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors ${
+                className={`flex items-center space-x-2 px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors ${
                   isRTL ? "space-x-reverse flex-row-reverse" : ""
                 }`}
               >
@@ -238,8 +272,7 @@ const Settings: React.FC = () => {
                 isRTL ? "text-right" : "text-left"
               }`}
             >
-              {t("settings.companyLogo")}{" "}
-              {isEditing && <span className="text-red-500">*</span>}
+              {t("settings.companyLogo")}
             </label>
             <div
               className={`flex items-center space-x-4 ${
@@ -283,7 +316,6 @@ const Settings: React.FC = () => {
                     onChange={handleLogoUpload}
                     className="hidden"
                     disabled={!isEditing}
-                    required={isEditing}
                   />
                 </label>
                 {errors.logo && (
@@ -413,7 +445,7 @@ const Settings: React.FC = () => {
             </label>
             <textarea
               name="address"
-              value={formData.address}
+              value={formData.address.replace(/\\n/g, "\n")}
               onChange={handleInputChange}
               disabled={!isEditing}
               rows={3}
@@ -447,16 +479,16 @@ const Settings: React.FC = () => {
             </label>
             <select
               name="language"
-              value={formData.language}
+              value={formData.language || "it"}
               onChange={handleLanguageChange}
               disabled={!isEditing}
               className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 isRTL ? "text-right" : "text-left"
               } ${!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}`}
             >
-              <option value="en">{t("languages.english")}</option>
-              <option value="ar">{t("languages.arabic")}</option>
               <option value="it">{t("languages.italian")}</option>
+              <option value="en">{t("languages.english")}</option>
+              {/* <option value="ar">{t("languages.arabic")}</option> */}
             </select>
           </div>
 
@@ -471,16 +503,16 @@ const Settings: React.FC = () => {
             </label>
             <select
               name="currency"
-              value={formData.currency}
+              value={formData.currency || "CHF"}
               onChange={handleInputChange}
               disabled={!isEditing}
               className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 isRTL ? "text-right" : "text-left"
               } ${!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}`}
             >
-              <option value="USD">{t("currencies.usd")}</option>
-              <option value="EGP">{t("currencies.egp")}</option>
               <option value="CHF">{t("currencies.chf")}</option>
+              <option value="USD">{t("currencies.usd")}</option>
+              {/* <option value="EGP">{t("currencies.egp")}</option> */}
             </select>
           </div>
 

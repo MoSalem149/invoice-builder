@@ -11,11 +11,16 @@ import { useAuth } from "../hooks/useAuth";
 
 const initialState: AppState = {
   company: {
-    logo: "",
-    name: "",
-    address: "",
-    currency: "USD",
-    language: "en",
+    logo: "/images/default-logo.png",
+    name: "Said Trasporto Gordola",
+    address: "Via S.Gottardo 100,\n6596 Gordola",
+    email: "Info@saidauto.ch",
+    phone: "",
+    currency: "CHF",
+    language: "it",
+    watermark: "",
+    showNotes: false,
+    showTerms: false,
     taxRate: 0,
   },
   clients: [],

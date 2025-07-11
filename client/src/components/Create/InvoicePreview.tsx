@@ -26,14 +26,14 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   // Updated currency symbol logic
   const currencySymbol = () => {
     switch (state.company.currency) {
+      case "CHF":
+        return "CHF";
       case "USD":
         return "$";
       case "EGP":
         return isRTL ? "ج.م" : "EGP";
-      case "CHF":
-        return "Fr.";
       default:
-        return "$";
+        return "CHF";
     }
   };
 

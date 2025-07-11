@@ -40,18 +40,18 @@ const userSchema = new mongoose.Schema(
     },
     // Add company settings directly to user for simplicity
     company: {
-      logo: { type: String, default: "" },
-      name: { type: String, default: "" },
-      address: { type: String, default: "" },
-      email: { type: String, default: "" },
+      logo: { type: String, default: "/images/default-logo.png" },
+      name: { type: String, default: "Said Trasporto Gordola" },
+      address: { type: String, default: "Via S.Gottardo 100,\n6596 Gordola" },
+      email: { type: String, default: "Info@saidauto.ch" },
       phone: { type: String, default: "" },
-      currency: { type: String, enum: ["USD", "EGP", "CHF"], default: "USD" },
-      language: { type: String, enum: ["en", "ar", "it"], default: "en" },
+      currency: { type: String, enum: ["CHF", "USD", "EGP"], default: "CHF" },
+      language: { type: String, enum: ["it", "en", "ar"], default: "it" },
       watermark: { type: String, default: "" },
       showNotes: { type: Boolean, default: false },
       showTerms: { type: Boolean, default: false },
-      taxRate: { type: Number, default: 0, min: 0, max: 100 }
-    }
+      taxRate: { type: Number, default: 0, min: 0, max: 100 },
+    },
   },
   {
     timestamps: true,

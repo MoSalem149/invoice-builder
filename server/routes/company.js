@@ -11,7 +11,7 @@ const router = express.Router();
 router.get("/", authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -44,25 +44,23 @@ router.put(
       .trim()
       .isLength({ min: 1 })
       .withMessage("Company name is required"),
-    body("address")
-      .optional()
-      .trim(),
+    body("address").optional().trim(),
     body("email")
       .optional()
       .trim()
       .isEmail()
       .withMessage("Please provide a valid email"),
-    body("phone")
-      .optional()
-      .trim(),
+    body("phone").optional().trim(),
     body("currency")
       .optional()
-      .isIn(["USD", "EGP", "CHF"])
-      .withMessage("Invalid currency"),
+      .isIn(["CHF", "USD", "EGP"])
+      .withMessage("Invalid currency")
+      .default("CHF"),
     body("language")
       .optional()
-      .isIn(["en", "ar", "it"])
-      .withMessage("Invalid language"),
+      .isIn(["it", "en", "ar"])
+      .withMessage("Invalid language")
+      .default("it"),
     body("watermark")
       .optional()
       .trim()
@@ -94,13 +92,21 @@ router.put(
 
       const updateData = {};
       const allowedFields = [
-        'logo', 'name', 'address', 'email', 'phone', 
-        'currency', 'language', 'watermark', 'showNotes', 
-        'showTerms', 'taxRate'
+        "logo",
+        "name",
+        "address",
+        "email",
+        "phone",
+        "currency",
+        "language",
+        "watermark",
+        "showNotes",
+        "showTerms",
+        "taxRate",
       ];
 
       // Build the update object with company prefix
-      allowedFields.forEach(field => {
+      allowedFields.forEach((field) => {
         if (req.body[field] !== undefined) {
           updateData[`company.${field}`] = req.body[field];
         }

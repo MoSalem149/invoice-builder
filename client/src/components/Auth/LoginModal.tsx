@@ -9,6 +9,7 @@ interface LoginModalProps {
   onClose: () => void;
   onSwitchToRegister: () => void;
   onShowForgotPassword: () => void;
+  onLoginSuccess: () => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({
@@ -16,6 +17,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   onSwitchToRegister,
   onShowForgotPassword,
+  onLoginSuccess,
 }) => {
   const { login } = useAuth();
   const { t, isRTL } = useLanguage();
@@ -59,6 +61,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
       onClose();
       setFormData({ email: "", password: "" });
       setErrors({});
+      onLoginSuccess(); // Call this after successful login
     } else {
       showError(t("auth.loginFailed"), t("auth.invalidCredentials"));
     }

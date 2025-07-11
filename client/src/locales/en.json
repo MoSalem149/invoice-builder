@@ -1,6 +1,7 @@
 {
   "common": {
     "save": "Save",
+    "update": "Update",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -66,6 +67,7 @@
     "verifyEmail": "Verify Email",
     "emailVerified": "Email verified",
     "canResetPassword": "You can now reset your password",
+    "passwordReset": "Password reset successfully",
     "passwordUpdated": "Password updated successfully",
     "resetting": "Resetting...",
     "verifying": "Verifying...",
@@ -270,6 +272,6 @@
   "currencies": {
     "usd": "USD ($)",
     "egp": "EGP (ج.م)",
-    "chf": "CHF (Fr.)"
+    "chf": "CHF (CHF)"
   }
 }

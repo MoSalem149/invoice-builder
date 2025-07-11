@@ -2,9 +2,7 @@ import React, { useState, useEffect } from "react";
 import { AuthProvider } from "./context/AuthContext";
 import { AppProvider } from "./context/AppContext";
 import { LanguageProvider } from "./context/LanguageContext";
-import {
-  NotificationProvider,
-} from "./context/NotificationContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { useAuth } from "./hooks/useAuth";
 import { useNotificationContext } from "./hooks/useNotificationContext";
 import NotificationContainer from "./components/UI/NotificationContainer";
@@ -80,13 +78,16 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar
-        currentPage={currentPage}
-        onPageChange={handlePageChange}
-        onShowLogin={() => setShowLoginModal(true)}
-        onShowRegister={() => setShowRegisterModal(true)}
-      />
-      <main className="pb-8">{renderPage()}</main>
+      {/* Fixed Navbar */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <Navbar
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          onShowLogin={() => setShowLoginModal(true)}
+          onShowRegister={() => setShowRegisterModal(true)}
+        />
+      </div>
+      <main className="pt-16 pb-8">{renderPage()}</main>
       <NotificationContainer
         notifications={notifications}
         onClose={removeNotification}
@@ -102,6 +103,7 @@ const AppContent: React.FC = () => {
           setShowLoginModal(false);
           setShowForgotPasswordModal(true);
         }}
+        onLoginSuccess={() => setCurrentPage("dashboard")} // Add this line
       />
       <RegisterModal
         isOpen={showRegisterModal}

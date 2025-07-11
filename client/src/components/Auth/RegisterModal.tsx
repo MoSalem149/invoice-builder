@@ -66,20 +66,28 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
     if (!validateForm()) return;
 
     setIsLoading(true);
-    const success = await register(
-      formData.name,
-      formData.email,
-      formData.password
-    );
-    setIsLoading(false);
-
-    if (success) {
-      showSuccess(t("auth.registrationSuccessful"), t("auth.welcome"));
-      onClose();
-      setFormData({ name: "", email: "", password: "", confirmPassword: "" });
-      setErrors({});
-    } else {
-      showError(t("auth.registrationFailed"), t("auth.tryAgain"));
+    try {
+      const success = await register(
+        formData.name,
+        formData.email,
+        formData.password
+      );
+      if (success) {
+        showSuccess(t("auth.registrationSuccessful"), t("auth.welcome"));
+        onClose();
+        setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+        setErrors({});
+      }
+    } catch (error) {
+      let errorMessage = t("auth.tryAgain");
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      }
+      showError(t("auth.registrationFailed"), errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -7,6 +7,8 @@ import {
   Trash2,
   Archive,
   ArchiveRestore,
+  Edit,
+  Check,
 } from "lucide-react";
 import { useApp } from "../../../hooks/useApp";
 import { useAuth } from "../../../hooks/useAuth";
@@ -51,8 +53,15 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
     discount: 0,
     price: 0,
   });
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  const filteredProducts = state.products.filter((product) => {
+  // Ensure products have unique IDs
+  const productsWithUniqueIds = state.products.map((product) => ({
+    ...product,
+    uniqueId: `${product.id}-${Date.now()}`, // Add timestamp to ensure uniqueness
+  }));
+
+  const filteredProducts = productsWithUniqueIds.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -62,10 +71,24 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
     return matchesSearch && matchesArchiveFilter;
   });
 
-  const handleProductToggle = (productId: string) => {
+  const handleProductToggle = (productId: string, e?: React.MouseEvent) => {
+    // Prevent event bubbling if coming from a button click
+    if (
+      e &&
+      (e.target instanceof HTMLButtonElement ||
+        e.target instanceof HTMLInputElement)
+    ) {
+      return;
+    }
+
     const newSelected = new Set(selectedProducts);
     if (newSelected.has(productId)) {
       newSelected.delete(productId);
+      setProductQuantities((prev) => {
+        const newQuantities = { ...prev };
+        delete newQuantities[productId];
+        return newQuantities;
+      });
     } else {
       newSelected.add(productId);
       setProductQuantities((prev) => ({ ...prev, [productId]: 1 }));
@@ -117,22 +140,24 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
     }
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/products`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authState.token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: newProduct.name,
-            description: newProduct.description || "",
-            price: newProduct.price,
-            discount: newProduct.discount || 0,
-          }),
-        }
-      );
+      const method = editingProduct ? "PUT" : "POST";
+      const url = editingProduct
+        ? `${import.meta.env.VITE_API_URL}/api/products/${editingProduct.id}`
+        : `${import.meta.env.VITE_API_URL}/api/products`;
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${authState.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newProduct.name,
+          description: newProduct.description || "",
+          price: newProduct.price,
+          discount: newProduct.discount || 0,
+        }),
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -145,23 +170,33 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
           archived: data.data.archived,
         };
 
-        dispatch({ type: "ADD_PRODUCT", payload: product });
+        if (editingProduct) {
+          dispatch({ type: "UPDATE_PRODUCT", payload: product });
+          showSuccess(
+            "Product updated successfully",
+            "Product has been updated in your catalog"
+          );
+        } else {
+          dispatch({ type: "ADD_PRODUCT", payload: product });
+          showSuccess(
+            "Product added successfully",
+            "Product has been added to your catalog"
+          );
+        }
+
         setNewProduct({ name: "", description: "", discount: 0, price: 0 });
         setShowAddForm(false);
+        setEditingProduct(null);
         setErrors({});
-        showSuccess(
-          "Product added successfully",
-          "Product has been added to your catalog"
-        );
       } else {
         const errorData = await response.json();
         showError(
-          "Failed to add product",
+          editingProduct ? "Failed to update product" : "Failed to add product",
           errorData.message || "Please try again"
         );
       }
     } catch (error) {
-      console.error("Error adding product:", error);
+      console.error("Error saving product:", error);
       showError("Network error", "Failed to connect to server");
     }
   };
@@ -184,7 +219,7 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/products/${productId}/archive`,
+        `${import.meta.env.VITE_API_URL}/api/products/${productId}/archive`,
         {
           method: "PUT",
           headers: {
@@ -220,12 +255,14 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
 
   const handleAddToInvoice = () => {
     const newItems: InvoiceItem[] = Array.from(selectedProducts).map(
-      (productId) => {
-        const product = state.products.find((p) => p.id === productId)!;
-        const quantity = productQuantities[productId] || 1;
+      (productUniqueId) => {
+        const product = filteredProducts.find(
+          (p) => p.uniqueId === productUniqueId
+        )!;
+        const quantity = productQuantities[productUniqueId] || 1;
         const amount = product.price * quantity * (1 - product.discount / 100);
         return {
-          id: Date.now().toString() + productId,
+          id: `${Date.now()}-${productUniqueId}`,
           name: product.name,
           description: product.description,
           discount: product.discount,
@@ -264,7 +301,25 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
           </button>
         </div>
 
-        {/* Archive Toggle */}
+        {selectedProducts.size > 0 && (
+          <div className="mb-4">
+            <button
+              onClick={handleAddToInvoice}
+              className={`w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ${
+                isRTL ? "space-x-reverse flex-row-reverse" : ""
+              }`}
+            >
+              <Plus className="h-4 w-4" />
+              <span>
+                {t("product.addSelectedProducts").replace(
+                  "{count}",
+                  selectedProducts.size.toString()
+                )}
+              </span>
+            </button>
+          </div>
+        )}
+
         <div className="mb-4">
           <div
             className={`flex space-x-2 ${
@@ -294,7 +349,6 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
           </div>
         </div>
 
-        {/* Search */}
         <div className="relative mb-4">
           <Search
             className={`absolute ${
@@ -313,10 +367,12 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
           />
         </div>
 
-        {/* Add Product Button */}
         {!showArchived && (
           <button
-            onClick={() => setShowAddForm(true)}
+            onClick={() => {
+              setEditingProduct(null);
+              setShowAddForm(true);
+            }}
             className={`w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
               isRTL ? "space-x-reverse flex-row-reverse" : ""
             }`}
@@ -332,12 +388,15 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
         <div className="space-y-3 mb-6">
           {filteredProducts.map((product) => (
             <div
-              key={product.id}
-              className={`p-3 sm:p-4 border rounded-lg transition-colors ${
-                selectedProducts.has(product.id)
+              key={product.uniqueId}
+              onClick={(e) =>
+                !product.archived && handleProductToggle(product.uniqueId, e)
+              }
+              className={`p-3 sm:p-4 border rounded-lg transition-colors cursor-pointer ${
+                selectedProducts.has(product.uniqueId)
                   ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300"
-              } ${product.archived ? "opacity-60" : ""}`}
+                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+              } ${product.archived ? "opacity-60 cursor-default" : ""}`}
             >
               <div
                 className={`flex items-start justify-between ${
@@ -350,12 +409,17 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
                   }`}
                 >
                   {!product.archived && (
-                    <input
-                      type="checkbox"
-                      checked={selectedProducts.has(product.id)}
-                      onChange={() => handleProductToggle(product.id)}
-                      className="mt-1 flex-shrink-0"
-                    />
+                    <div
+                      className={`mt-1 flex-shrink-0 w-5 h-5 rounded border ${
+                        selectedProducts.has(product.uniqueId)
+                          ? "bg-blue-500 border-blue-500 text-white"
+                          : "border-gray-300"
+                      } flex items-center justify-center transition-colors`}
+                    >
+                      {selectedProducts.has(product.uniqueId) && (
+                        <Check className="h-3 w-3" />
+                      )}
+                    </div>
                   )}
                   <Package className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div
@@ -376,54 +440,82 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
                       {t("product.discountRate")}: {product.discount}%
                     </p>
 
-                    {selectedProducts.has(product.id) && !product.archived && (
-                      <div className="mt-2">
-                        <label
-                          className={`block text-sm font-medium text-gray-700 mb-1 ${
-                            isRTL ? "text-right" : "text-left"
-                          }`}
-                        >
-                          {t("product.quantity")}
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={productQuantities[product.id] || 1}
-                          onChange={(e) =>
-                            handleQuantityChange(
-                              product.id,
-                              parseInt(e.target.value)
-                            )
-                          }
-                          className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
-                    )}
+                    {selectedProducts.has(product.uniqueId) &&
+                      !product.archived && (
+                        <div className="mt-2 ml-8">
+                          <label
+                            className={`block text-sm font-medium text-gray-700 mb-1 ${
+                              isRTL ? "text-right" : "text-left"
+                            }`}
+                          >
+                            {t("product.quantity")}
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={productQuantities[product.uniqueId] || 1}
+                            onChange={(e) =>
+                              handleQuantityChange(
+                                product.uniqueId,
+                                parseInt(e.target.value)
+                              )
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      )}
                   </div>
                 </div>
-                <button
-                  onClick={() =>
-                    handleArchiveToggle(product.id, product.archived || false)
-                  }
-                  className="p-1 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
-                  title={
-                    product.archived
-                      ? t("common.unarchive")
-                      : t("common.archive")
-                  }
+                <div
+                  className={`flex space-x-2 ${isRTL ? "space-x-reverse" : ""}`}
                 >
-                  {product.archived ? (
-                    <ArchiveRestore className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Archive className="h-4 w-4 text-gray-500" />
+                  {!product.archived && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingProduct(product);
+                        setNewProduct({
+                          name: product.name,
+                          description: product.description,
+                          price: product.price,
+                          discount: product.discount,
+                        });
+                        setShowAddForm(true);
+                      }}
+                      className="p-1 hover:bg-gray-100 rounded transition-colors text-blue-500"
+                      title={t("common.edit")}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
                   )}
-                </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleArchiveToggle(
+                        product.id,
+                        product.archived || false
+                      );
+                    }}
+                    className="p-1 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                    title={
+                      product.archived
+                        ? t("common.unarchive")
+                        : t("common.archive")
+                    }
+                  >
+                    {product.archived ? (
+                      <ArchiveRestore className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Archive className="h-4 w-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Current Items */}
         {selectedItems.length > 0 && (
           <div className="border-t pt-6">
             <h3
@@ -471,21 +563,6 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
           </div>
         )}
 
-        {/* Add Selected Button */}
-        {selectedProducts.size > 0 && (
-          <div className="border-t pt-6">
-            <button
-              onClick={handleAddToInvoice}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              {t("product.addSelectedProducts").replace(
-                "{count}",
-                selectedProducts.size.toString()
-              )}
-            </button>
-          </div>
-        )}
-
         {filteredProducts.length === 0 && (
           <div className="text-center py-8">
             <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -494,7 +571,7 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
         )}
       </div>
 
-      {/* Add Product Modal */}
+      {/* Add/Edit Product Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md">
@@ -503,7 +580,9 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
                 isRTL ? "text-right" : "text-left"
               }`}
             >
-              {t("product.addNewProduct")}
+              {editingProduct
+                ? t("product.editProduct")
+                : t("product.addNewProduct")}
             </h3>
 
             <div className="space-y-4">
@@ -513,7 +592,7 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
                     isRTL ? "text-right" : "text-left"
                   }`}
                 >
-                  {t("product.name")}
+                  {t("product.name")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -649,6 +728,7 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
                     discount: 0,
                     price: 0,
                   });
+                  setEditingProduct(null);
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
@@ -658,7 +738,7 @@ const ProductsPanel: React.FC<ProductsPanelProps> = ({
                 onClick={handleAddProduct}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                {t("product.addProduct")}
+                {editingProduct ? t("common.update") : t("product.addProduct")}
               </button>
             </div>
           </div>

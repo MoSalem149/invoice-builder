@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 5000;
 
 // Security middleware
 app.use(helmet());
+app.use(express.static("public"));
 
 // Rate limiting
 const limiter = rateLimit({

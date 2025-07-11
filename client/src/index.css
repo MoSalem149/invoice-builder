@@ -5,6 +5,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Add smooth scrolling to the entire app */
+html {
+  scroll-behavior: smooth;
+}
+
 /* RTL Support */
 .rtl {
   direction: rtl;

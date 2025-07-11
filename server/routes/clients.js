@@ -40,22 +40,8 @@ router.post(
   authenticate,
   [
     body("name").trim().notEmpty().withMessage("Client name is required"),
-    body("address")
-      .optional()
-      .trim()
-      .isLength({ min: 1 })
-      .withMessage("Client address is required"),
-    body("phone")
-      .optional()
-      .trim()
-      .isLength({ min: 1 })
-      .withMessage("Phone number is required"),
-    body("email")
-      .optional()
-      .trim()
-      .normalizeEmail()
-      .isEmail()
-      .withMessage("Please provide a valid email"),
+    body("address").optional().trim(),
+    body("phone").optional().trim(),
   ],
   async (req, res) => {
     try {
@@ -68,14 +54,13 @@ router.post(
         });
       }
 
-      const { name, address, phone, email } = req.body;
+      const { name, address, phone } = req.body;
 
       const client = new Client({
         userId: req.user._id,
         name,
         address: address || "",
         phone: phone || "",
-        email: email || "",
       });
 
       await client.save();
@@ -107,22 +92,8 @@ router.put(
       .trim()
       .notEmpty()
       .withMessage("Client name cannot be empty"),
-    body("address")
-      .optional()
-      .trim()
-      .notEmpty()
-      .withMessage("Client address cannot be empty"),
-    body("phone")
-      .optional()
-      .trim()
-      .isLength({ min: 6, max: 20 })
-      .withMessage("Phone number must be between 6-20 characters"),
-    body("email")
-      .optional()
-      .trim()
-      .normalizeEmail()
-      .isEmail()
-      .withMessage("Please provide a valid email"),
+    body("address").optional().trim(),
+    body("phone").optional().trim(),
   ],
   async (req, res) => {
     try {
@@ -197,34 +168,58 @@ router.put("/:id/archive", authenticate, async (req, res) => {
   }
 });
 
-// @route   DELETE /api/clients/:id
-// @desc    Delete a client
+// @route   PATCH /api/clients/:id
+// @desc    Edit a client (partial update)
 // @access  Private
-router.delete("/:id", authenticate, async (req, res) => {
-  try {
-    const client = await Client.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user._id,
-    });
+router.patch(
+  "/:id",
+  authenticate,
+  [
+    body("name")
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage("Client name cannot be empty"),
+    body("address").optional().trim(),
+    body("phone").optional().trim(),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: errors.array(),
+        });
+      }
 
-    if (!client) {
-      return res.status(404).json({
+      const client = await Client.findOneAndUpdate(
+        { _id: req.params.id, userId: req.user._id },
+        req.body,
+        { new: true, runValidators: true }
+      );
+
+      if (!client) {
+        return res.status(404).json({
+          success: false,
+          message: "Client not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Client edited successfully",
+        data: client,
+      });
+    } catch (error) {
+      console.error("Edit client error:", error);
+      res.status(500).json({
         success: false,
-        message: "Client not found",
+        message: "Server error while editing client",
       });
     }
-
-    res.json({
-      success: true,
-      message: "Client deleted successfully",
-    });
-  } catch (error) {
-    console.error("Delete client error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while deleting client",
-    });
   }
-});
+);
 
 export default router;
